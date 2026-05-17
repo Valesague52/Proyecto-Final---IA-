@@ -36,71 +36,66 @@ La forma práctica de organizar tu parte es:
 
 ## Sección 3 del informe - Arquitectura del sistema
 
-### Idea general
+### Versión final sugerida
 
-El sistema se divide en tres capas:
+La arquitectura del sistema se diseñó como un flujo modular orientado a la predicción del riesgo de deserción estudiantil a partir de variables académicas, demográficas, financieras e institucionales. En la primera capa, el sistema recibe los datos previamente depurados y transformados durante la etapa de preprocesamiento. Esta fase garantiza consistencia en la codificación de variables, escalado, partición de los conjuntos de datos y trazabilidad experimental, de modo que el módulo de modelado opere sobre entradas homogéneas y reproducibles.
 
-1. **Entrada y preparación de datos**
-2. **Motor predictivo**
-3. **Salida de probabilidades y predicciones**
+En la segunda capa se implementó el motor predictivo del proyecto, compuesto por un baseline lineal de referencia y un modelo principal basado en LightGBM. El baseline permite establecer un punto de comparación claro para medir la ganancia real del modelo más avanzado. Por su parte, LightGBM fue seleccionado como modelo principal debido a su buen desempeño en datos tabulares, su capacidad para capturar relaciones no lineales entre variables y su eficiencia para explorar interacciones complejas sin requerir un preprocesamiento excesivo adicional.
 
-### Texto base sugerido
+En la tercera capa, el sistema produce probabilidades de riesgo y predicciones binarias de deserción. Estos resultados se almacenan junto con los hiperparámetros seleccionados, las métricas de validación y los artefactos de handoff. De esta manera, el bloque de modelado queda desacoplado de la evaluación final, permitiendo que el Integrante 3 utilice el mejor candidato encontrado como insumo directo para la comparación formal de modelos, la evaluación sobre el conjunto de prueba y la comunicación final de resultados.
 
-La arquitectura del sistema se diseñó como un flujo modular orientado a la predicción del riesgo de deserción académica. En una primera etapa, el sistema recibe variables académicas, demográficas, financieras e institucionales provenientes del dataset de estudiantes. Estas variables son procesadas mediante el pipeline de limpieza y transformación construido en la fase anterior del proyecto, garantizando consistencia en escalado, partición de datos y trazabilidad experimental.
+### Componentes clave que debes mencionar
 
-En la segunda etapa se implementó el módulo de modelado, compuesto por un baseline de referencia y un modelo principal basado en LightGBM. La elección de LightGBM responde a tres razones: su buen desempeño en datos tabulares, su robustez frente a relaciones no lineales y su capacidad para manejar de forma eficiente interacciones complejas entre variables.
-
-Finalmente, el módulo predictivo entrega probabilidades de riesgo y predicciones binarias que pueden ser reutilizadas en etapas posteriores del proyecto. De esta manera, el Integrante 3 puede tomar el mejor modelo seleccionado y usarlo como base para la evaluación final, la comparación formal de modelos y la comunicación de resultados.
-
-### Componentes que debes mencionar
-
-- **Datos de entrada:** variables procesadas por el Integrante 1.
-- **Baseline:** referencia simple para comparar desempeño.
-- **Modelo principal:** LightGBM con manejo de desbalance.
-- **Interfaz de salida para el Integrante 3:** probabilidad de dropout, clase predicha y mejor configuración encontrada.
+- **Entrada del sistema:** conjuntos `X_train`, `X_val`, `y_train` y `y_val` generados en la etapa de preprocesamiento.
+- **Baseline de referencia:** `logreg_balanced`, usado para medir si el modelo principal aporta una mejora real.
+- **Modelo principal:** `LightGBM` con manejo de desbalance mediante `class_weight='balanced'`.
+- **Salida del módulo:** probabilidades, predicción binaria, métricas de validación, mejores hiperparámetros y artefactos de handoff.
 
 ### Figura sugerida para esta sección
 
-- Diagrama simple:
-  - `Datos procesados -> Baseline / LightGBM -> Probabilidad de deserción -> Handoff a evaluación final`
+- `Datos procesados -> Baseline / LightGBM -> Predicción de deserción -> Artefactos de handoff`
 
 ## Sección 4 del informe - Metodología
 
-### Idea general
+### Versión final sugerida
 
-Esta sección debe explicar:
+El proceso de modelado se desarrolló utilizando exclusivamente los conjuntos de entrenamiento y validación construidos durante la etapa de preprocesamiento. El conjunto de prueba se mantuvo completamente aislado para evitar data leakage y preservar una evaluación final imparcial, la cual corresponde al bloque del Integrante 3. Bajo este esquema, el conjunto `train` se utilizó para el ajuste inicial de los modelos, mientras que el conjunto `val` se destinó a la comparación de candidatos y a la selección del modelo final.
 
-- cómo se entrenó
-- cómo se validó
-- cómo se eligió el modelo final
-- con qué métricas se comparó
+Como línea base se entrenaron dos referencias sencillas: un `DummyClassifier` con estrategia `prior`, que establece el piso mínimo del problema, y una `LogisticRegression` balanceada, utilizada como baseline lineal competitivo. Posteriormente se implementó un modelo `LightGBM` base con `class_weight='balanced'`, decisión coherente con el desbalance observado en la variable objetivo durante el análisis exploratorio. Sobre este modelo se aplicó un proceso de ajuste de hiperparámetros mediante `RandomizedSearchCV`, utilizando un `PredefinedSplit` para respetar la separación entre entrenamiento y validación durante la búsqueda.
 
-### Texto base sugerido
+La métrica principal de selección fue `F1`, complementada con `accuracy`, `precision`, `recall` y `AUC-ROC`. Esta decisión metodológica responde a que el problema de deserción estudiantil presenta desbalance de clases y, en consecuencia, no resulta suficiente optimizar únicamente accuracy. Desde una perspectiva aplicada, la métrica F1 permite balancear precisión y recall, mientras que recall adquiere una relevancia especial al buscar identificar correctamente a los estudiantes en riesgo.
 
-El proceso de modelado se llevó a cabo sobre los conjuntos de entrenamiento y validación generados en la fase de preprocesamiento. Para evitar data leakage, la selección de hiperparámetros se realizó utilizando únicamente la información de entrenamiento y validación, reservando el conjunto de prueba exclusivamente para la evaluación final que desarrollará el Integrante 3.
+El modelo finalmente seleccionado fue `lightgbm_tuned`, que alcanzó un `F1 = 0.8057` sobre validación, superando de forma marginal a `logreg_balanced` (`F1 = 0.8054`). Aunque la diferencia es pequeña, el resultado respalda la elección de LightGBM como modelo principal del proyecto, ya que ofrece un desempeño competitivo y conserva la ventaja de modelar relaciones no lineales en datos tabulares.
 
-Como punto de referencia se entrenó un baseline simple, con el objetivo de establecer un nivel mínimo de desempeño. Posteriormente se implementó un modelo LightGBM con `class_weight='balanced'`, decisión justificada por el desbalance detectado en la variable objetivo durante el análisis exploratorio. Después se realizó un proceso de ajuste de hiperparámetros para optimizar el desempeño del modelo sobre el conjunto de validación.
+### Resultados de validación que puedes reportar
 
-La selección del modelo final se basó principalmente en la métrica F1, complementada con AUC-ROC, recall, precision y accuracy. Esta elección responde a que el problema de deserción académica presenta desbalance de clases y el interés práctico está en detectar correctamente a los estudiantes en riesgo sin depender solo de accuracy.
+- `lightgbm_tuned`: `accuracy = 0.8765`, `precision = 0.8173`, `recall = 0.7944`, `f1 = 0.8057`, `roc_auc = 0.9235`
+- `logreg_balanced`: `accuracy = 0.8705`, `precision = 0.7807`, `recall = 0.8318`, `f1 = 0.8054`, `roc_auc = 0.9259`
+- `lightgbm_default`: `accuracy = 0.8614`, `precision = 0.8020`, `recall = 0.7570`, `f1 = 0.7788`, `roc_auc = 0.9215`
+- `dummy_prior`: `accuracy = 0.6777`, `precision = 0.0000`, `recall = 0.0000`, `f1 = 0.0000`, `roc_auc = 0.5000`
+
+### Hiperparámetros del modelo final
+
+- `subsample = 0.9`
+- `reg_lambda = 0.5`
+- `reg_alpha = 0.0`
+- `num_leaves = 127`
+- `n_estimators = 300`
+- `min_child_samples = 10`
+- `max_depth = 5`
+- `learning_rate = 0.1`
+- `colsample_bytree = 0.7`
 
 ### Decisiones metodológicas que debes defender
 
-- Problema tratado como **clasificación binaria**.
-- División respetada:
-  - `train`: ajuste inicial
-  - `val`: selección/tuning
-  - `test`: reservado para evaluación final
-- **Manejo del desbalance** con `class_weight='balanced'`.
-- Baseline para medir ganancia real.
-- Tuning de LightGBM con búsqueda aleatoria.
-
-### Métricas recomendadas
-
-- **F1** como métrica principal.
-- **AUC-ROC** como apoyo.
-- **Recall** porque perder estudiantes en riesgo puede ser costoso.
-- **Precision** para medir calidad de las alertas.
-- **Accuracy** solo como referencia secundaria.
+- Problema tratado como **clasificación binaria** de riesgo de deserción.
+- Separación estricta de conjuntos:
+  - `train` para ajuste inicial
+  - `val` para comparación y tuning
+  - `test` reservado para evaluación final
+- Manejo del desbalance con `class_weight='balanced'`.
+- Uso de un baseline para medir la ganancia real del modelo principal.
+- Selección final basada en `F1` como métrica principal.
 
 ## Qué debes completar después de correr el notebook 03
 
