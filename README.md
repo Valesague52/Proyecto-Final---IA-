@@ -83,7 +83,7 @@ jupyter notebook
     │   ├── raw/                  ← FUENTE.md
     │   └── processed/            ← splits + figuras
     ├── docs/
-    │   ├── Proyecto_Final_COMPLETO.tex
+    |   ├── Informe-Proyecto Final IA
     │   └── guia_usuario.md
     ├── models/
     │   ├── checkpoints/          ← lightgbm_dropout_model.pkl
