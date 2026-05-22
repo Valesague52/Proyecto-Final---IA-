@@ -107,7 +107,7 @@ jupyter notebook
 
 ## Video demo
 
-[www.youtube.com/watch?v=aOkuu5GL9f8 ](www.youtube.com/watch?v=aOkuu5GL9f8 )
+https://www.youtube.com/watch?v=aOkuu5GL9f8
 
 ---
 
