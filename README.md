@@ -107,10 +107,10 @@ jupyter notebook
 
 ## Video demo
 
-📹 [https://youtu.be/link-al-video](#)
+[www.youtube.com/watch?v=aOkuu5GL9f8 ](www.youtube.com/watch?v=aOkuu5GL9f8 )
 
 ---
 
 ## Informe
 
-📄 `------------------` · Compilar en Overleaf con pdfLaTeX
+📄 `Informe-Proyecto Final IA` · 
